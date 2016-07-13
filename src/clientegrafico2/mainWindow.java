@@ -1,0 +1,457 @@
+package clientegrafico2;
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ *
+ * @author Jose
+ */
+import com.Archivo;
+import com.Cliente;
+import com.Message;
+import com.controladorMainWindow;
+import com.tablaDeRecursos;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Inet4Address;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.ListModel;
+
+public class mainWindow extends javax.swing.JFrame {
+static String[] listaPeliculas;
+    static Socket socket;
+    static Socket socketAux;
+    Thread hilo;
+    static ObjectInputStream entrada;
+    static ObjectOutputStream salida;
+    public static String antecesor = null;
+    public static String sucesor = null;
+    boolean logeado;
+    static int puerto = 7000;
+    static String direccion = System.getProperty("user.dir");
+    public static int cantArchivos;
+    /**
+     * Creates new form mainWindow
+     */
+    public mainWindow() {
+        initComponents();
+        controladorMainWindow.initOutlet(jCantidad);
+    }
+    
+
+    private static void recibeArchivo(Archivo archivo, ObjectInputStream entrada) {
+        try {
+            //Abro el escritor de archivos
+            FileOutputStream fos = new FileOutputStream(direccion+"\\src\\archivos\\" + archivo.nombreArchivo);
+            //defino un auxiliar por seguridad
+            Object mensajeAux=archivo;
+            Archivo mensajeRecibido=null; 
+            boolean primero=true; 
+            do
+            {
+                //voy leyendo el archivo poco a poco 
+               if(!primero)
+                   mensajeAux = entrada.readObject();
+               //y escribo el archivo 
+               if(mensajeAux instanceof Archivo)
+               {
+                   mensajeRecibido = (Archivo)mensajeAux; 
+                   /*System.out.print(new String(
+                            mensajeRecibido.contenidoArchivo, 0,
+                            mensajeRecibido.bytesValidos));*/
+                    fos.write(mensajeRecibido.contenidoArchivo, 0,
+                            mensajeRecibido.bytesValidos);
+               }
+               primero = false;
+            }while(!mensajeRecibido.ultimoMsj);
+            fos.close();     
+            System.out.println("Se termino de pasar el archivo");
+        } catch (FileNotFoundException ex) {
+            System.out.println("No existe la ruta donde copiarlo");
+            System.out.println(ex.toString());
+        } catch (IOException ex) {
+            System.out.println("Error al copiar el archivo");
+        } catch (ClassNotFoundException ex) {
+            System.out.println("Error al copiar el archivo");
+        }
+        
+    }
+        
+  public static void cambiarServidor (String ip)
+  {
+    try {
+        socket.close();
+        socket = new Socket(ip, puerto);
+        salida = new ObjectOutputStream(socket.getOutputStream());
+        entrada = new ObjectInputStream(socket.getInputStream());
+        Message comandoInicial = new Message();
+        comandoInicial.Mensaje = "conexion";
+        salida.writeObject(comandoInicial);
+        Object objPeticion = entrada.readObject(); 
+        Message peticion = (Message) objPeticion;
+        System.out.println(peticion.Mensaje);
+        mainWindow.sucesor = socket.getInetAddress().getHostAddress();
+        
+    } catch (IOException ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    } catch (ClassNotFoundException ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    }
+      
+  }
+  
+  public static void enviarMensaje (Message mensaje)
+  {
+      try
+      {
+          salida.writeObject(mensaje);
+      }
+      catch(Exception e)
+      {
+          System.out.println("Error enviando el mensaje");    
+      }
+  }
+  
+  public void sumarArchivo()
+  {
+      mainWindow.cantArchivos++;
+      jCantidad.setText(String.valueOf(mainWindow.cantArchivos));   
+  }
+  
+  public static void mostrarError()
+  {
+      JOptionPane error = new JOptionPane("Archivo no encontrado", JOptionPane.WARNING_MESSAGE);
+      JDialog ventana = error.createDialog("Error!");
+      ventana.setAlwaysOnTop(true);
+      ventana.setVisible(true);
+  }
+
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabel6 = new javax.swing.JLabel();
+        jTextDireccion = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        jLabelST = new javax.swing.JLabel();
+        jToggleArrancar = new javax.swing.JToggleButton();
+        jBSalir = new javax.swing.JButton();
+        jTFNombreArch = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jBBuscar = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        jCantidad = new javax.swing.JTextField();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
+
+        jLabel6.setText("IP Fan:");
+
+        jTextDireccion.setText("127.0.0.1");
+
+        jLabel2.setText("Conexion:");
+
+        jLabelST.setFont(new java.awt.Font("Ubuntu", 1, 15)); // NOI18N
+        jLabelST.setText("Detenido");
+
+        jToggleArrancar.setText("Conectar");
+        jToggleArrancar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleArrancarActionPerformed(evt);
+            }
+        });
+
+        jBSalir.setText("Desconectar");
+        jBSalir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jBSalirActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Nombre de archivo:");
+
+        jBBuscar.setText("Buscar");
+        jBBuscar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jBBuscarActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("Archivos descargos desde este equipo:");
+
+        jCantidad.setEditable(false);
+        jCantidad.setText("0");
+        jCantidad.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCantidadActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(32, 32, 32)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel2)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabelST)
+                            .addGap(15, 15, 15)
+                            .addComponent(jToggleArrancar)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jBSalir))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel6)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jTextDireccion, javax.swing.GroupLayout.PREFERRED_SIZE, 304, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(jTFNombreArch, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(18, 18, 18)
+                            .addComponent(jBBuscar))))
+                .addContainerGap(23, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jTextDireccion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addGap(12, 12, 12)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabelST)
+                    .addComponent(jToggleArrancar)
+                    .addComponent(jBSalir))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jTFNombreArch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1)
+                    .addComponent(jBBuscar))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(jCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(12, Short.MAX_VALUE))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void jToggleArrancarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleArrancarActionPerformed
+            //Leo la direccion de ip del fantasma dada por el usuario
+            String url = jTextDireccion.getText();
+            
+            
+            try {
+                socket = new Socket(url, puerto);
+//                jLabelStatus.setText("Conectado con el servidor");
+                salida = new ObjectOutputStream(socket.getOutputStream());
+                entrada = new ObjectInputStream(socket.getInputStream());
+                Message comandoInicial = new Message();
+                comandoInicial.Mensaje = "conexion";
+                salida.writeObject(comandoInicial);
+                Object objPeticion = entrada.readObject(); 
+                Message peticion = (Message) objPeticion;
+                if(!peticion.Mensaje.equals("aceptado"))
+                {
+                    System.out.println(peticion.Mensaje);
+                    String[] ip = peticion.Mensaje.split(":");
+                    socket.close();
+                    socket = new Socket(ip[1],puerto);
+                    salida = new ObjectOutputStream(socket.getOutputStream());
+                    entrada = new ObjectInputStream(socket.getInputStream());
+                    peticion.Mensaje = "conexion";
+                    salida.writeObject(peticion);
+                    mainWindow.sucesor = socket.getInetAddress().getHostAddress();
+                }
+                else
+                {
+                   mainWindow.sucesor = socket.getInetAddress().getHostAddress();
+                }
+                System.out.println("Conectado a: " + socket.getInetAddress().getHostAddress());
+            } catch (IOException e) {
+                socket = null;
+  //              jLabelStatus.setText("No se pudo conectar con el servidor");
+            } catch (ClassNotFoundException ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    }
+        
+
+    }//GEN-LAST:event_jToggleArrancarActionPerformed
+
+    private void jBSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBSalirActionPerformed
+    try {
+        socketAux = new Socket(antecesor, puerto);
+        ObjectOutputStream salidaAux = new ObjectOutputStream(socketAux.getOutputStream());
+        ObjectInputStream entradaAux = new ObjectInputStream(socketAux.getInputStream());
+        Message comandoInicial = new Message();
+        comandoInicial.Mensaje = "redireccion:"+sucesor;       
+        salidaAux.writeObject(comandoInicial);
+        socketAux.close();
+        this.dispose();
+    } catch (IOException ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    } catch (Throwable ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    }//GEN-LAST:event_jBSalirActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+           try {
+        socketAux = new Socket(antecesor, puerto);
+        ObjectOutputStream salidaAux = new ObjectOutputStream(socketAux.getOutputStream());
+        ObjectInputStream entradaAux = new ObjectInputStream(socketAux.getInputStream());
+        Message comandoInicial = new Message();
+        comandoInicial.Mensaje = "redireccion:"+sucesor;       
+        salidaAux.writeObject(comandoInicial);
+        socketAux.close();
+        this.dispose();
+    } catch (IOException ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    } catch (Throwable ex) {
+        Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+    }
+           
+    }//GEN-LAST:event_formWindowClosing
+
+    private void jBBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBBuscarActionPerformed
+       Message peticion = new Message();
+       String nombreArchivo = jTFNombreArch.getText();
+       if (!nombreArchivo.isEmpty())
+       {
+           if (tablaDeRecursos.buscarRecurso(nombreArchivo).equals("fallo"))
+           {
+            try {
+               peticion.Mensaje = "busqueda:"+Inet4Address.getLocalHost().getHostAddress()+":"+nombreArchivo;
+               /*salida = new ObjectOutputStream(socket.getOutputStream());
+               entrada = new ObjectInputStream(socket.getInputStream());*/
+               salida.writeObject(peticion);
+              
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+            } 
+           }
+           else
+           {
+               try {
+                   String ipASolicitar = tablaDeRecursos.buscarRecurso(nombreArchivo);
+                   //aqui va la logica de conexion y solicitud del archivo
+                   Message archivo = new Message();
+                   //creo un mensaje de solicitud del path relativo de ese archivo
+                   archivo.Mensaje = "\\src\\archivos\\"+nombreArchivo;
+                   System.out.println("Se solicitará el archivo: "+ archivo.Mensaje);
+                   Socket socketArchivo = new Socket(ipASolicitar, 7001);
+                   ObjectOutputStream salidaArchivo = new ObjectOutputStream(socketArchivo.getOutputStream());
+                   ObjectInputStream entradaArchivo = new ObjectInputStream(socketArchivo.getInputStream());
+                   salidaArchivo.writeObject(archivo);
+                   Object respuesta = entradaArchivo.readObject();
+                   if (respuesta instanceof Message) {
+                    Message alerta = (Message) respuesta;
+                    System.out.println(alerta.Mensaje);
+                    //Si la respuesta es una instancia de archivo entonces llamo a mi funcion de recibir archivo
+                   } else if(respuesta instanceof Archivo){
+                    Archivo archivoRecibido = (Archivo)respuesta;
+                    recibeArchivo(archivoRecibido, entradaArchivo);
+                   }
+               } catch (IOException ex) {
+                   System.out.println("Cache desactualizado realice de nuevo la busqueda");
+                   tablaDeRecursos.eliminarRecurso(nombreArchivo);
+               } catch (ClassNotFoundException ex) {
+                   Logger.getLogger(mainWindow.class.getName()).log(Level.SEVERE, null, ex);
+               }
+           }
+       }
+    }//GEN-LAST:event_jBBuscarActionPerformed
+
+    private void jCantidadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCantidadActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jCantidadActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(mainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(mainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(mainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(mainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new mainWindow().setVisible(true);
+            }
+        });
+    }
+    
+        
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jBBuscar;
+    private javax.swing.JButton jBSalir;
+    private javax.swing.JTextField jCantidad;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabelST;
+    private javax.swing.JTextField jTFNombreArch;
+    private javax.swing.JTextField jTextDireccion;
+    private javax.swing.JToggleButton jToggleArrancar;
+    // End of variables declaration//GEN-END:variables
+}
